@@ -40,11 +40,6 @@ public class UnlockCategoryPower extends Power {
 	}
 
 	@Override
-	public void onAdded() {
-    super.onAdded();
-  }
-
-	@Override
 	public void onRemoved() {
     super.onRemoved();
     SkillsAPI.getCategory(category).ifPresent(category -> category.lock(player));
