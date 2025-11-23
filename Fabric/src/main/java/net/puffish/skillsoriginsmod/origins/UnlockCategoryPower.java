@@ -16,9 +16,19 @@ public class UnlockCategoryPower extends Power {
 
 	private final Identifier category;
 
-	private UnlockCategoryPower(PowerType<?> type, LivingEntity entity, Identifier category) {
+  private ServerPlayerEntity player = null;
+
+  private boolean wasGiven = false;
+
+  private UnlockCategoryPower(PowerType<?> type, LivingEntity entity, Identifier category) {
 		super(type, entity);
 		this.category = category;
+
+    if (entity instanceof ServerPlayerEntity serverPlayer) {
+      this.player = serverPlayer;
+    }
+
+    addCondition(e -> player.networkHandler != null);
 	}
 
 	public static PowerFactory<UnlockCategoryPower> createFactory() {
@@ -31,19 +41,29 @@ public class UnlockCategoryPower extends Power {
 
 	@Override
 	public void onAdded() {
-		super.onAdded();
-		if (entity instanceof ServerPlayerEntity player) {
-			SkillsAPI.getCategory(category)
-					.ifPresent(category -> category.unlock(player));
-		}
-	}
+    super.onAdded();
+  }
 
 	@Override
 	public void onRemoved() {
-		super.onRemoved();
-		if (entity instanceof ServerPlayerEntity player) {
-			SkillsAPI.getCategory(category)
-					.ifPresent(category -> category.lock(player));
-		}
-	}
+    super.onRemoved();
+    SkillsAPI.getCategory(category).ifPresent(category -> category.lock(player));
+  }
+
+  @Override
+  public boolean shouldTick() {
+    return true;
+  }
+
+  @Override
+  public boolean isActive() {
+    return !wasGiven && super.isActive();
+  }
+
+  @Override
+  public void tick() {
+    super.tick();
+    SkillsAPI.getCategory(category).ifPresent(category -> category.unlock(player));
+    wasGiven = true;
+  }
 }
